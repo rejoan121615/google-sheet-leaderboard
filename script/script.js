@@ -1,4 +1,4 @@
-import { activityGameSheetURL } from "./config.js";
+import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
 class Leaderboard {
     activityGameData = [];
     crazyPoolData = [];
@@ -11,19 +11,28 @@ class Leaderboard {
         "Approve",
     ];
     async appStart() {
-        setTimeout(() => { });
+        setInterval(() => {
+            this.fetchData();
+            console.log("Data fetching started...");
+            console.log("Current Leaderboard:", this.currentLeaderboard);
+            console.log("Activity Game Data:", this.activityGameData);
+            console.log("Crazy Pool Data:", this.crazyPoolData);
+        }, 10000);
     }
     async fetchData() {
-        try {
-            const activityGameResponse = await fetch(activityGameSheetURL);
-            if (!activityGameResponse.ok) {
+        Promise.all([fetch(activityGameSheetURL), fetch(crazyPoolSheetURL)])
+            .then(async ([activityGameResponse, crazyPoolResponse]) => {
+            if (!activityGameResponse.ok || !crazyPoolResponse.ok) {
                 throw new Error("Failed to fetch data");
             }
-            await this.dataFilterAndSort(activityGameResponse, "high-to-low");
-        }
-        catch (error) {
+            const activityGameData = await this.dataFilterAndSort(activityGameResponse, "high-to-low");
+            const crazyPoolData = await this.dataFilterAndSort(crazyPoolResponse, "high-to-low");
+            this.activityGameData = activityGameData;
+            this.crazyPoolData = crazyPoolData;
+        })
+            .catch((error) => {
             console.error("Error fetching data:", error);
-        }
+        });
     }
     // filter and serialize data from large to small
     async dataFilterAndSort(response, type) {
@@ -33,7 +42,7 @@ class Leaderboard {
             .map((row) => {
             return Object.fromEntries(this.dataHeader.map((header, index) => [
                 header,
-                row.split(",")[index],
+                row.split(",").map((item) => item.trimEnd())[index],
             ]));
         })
             .sort((a, b) => {
@@ -41,18 +50,10 @@ class Leaderboard {
             const scoreB = Number(String(b.Score).replace(/\r/g, "").trim());
             return type === "high-to-low" ? scoreB - scoreA : scoreA - scoreB;
         });
-        console.log("filteredRow => ", filteredRow);
-    }
-    // filter and serilize data from small to large
-    smallToLargeShorter() { }
-    async filterAndSerializeData() { }
-    processData() {
-        console.log("Activity Game Data:", this.activityGameData);
-        // Implement data processing logic here
+        return filteredRow;
     }
 }
 document.addEventListener("DOMContentLoaded", async () => {
     const leaderboard = new Leaderboard();
-    await leaderboard.fetchData();
-    leaderboard.processData();
+    await leaderboard.appStart();
 });

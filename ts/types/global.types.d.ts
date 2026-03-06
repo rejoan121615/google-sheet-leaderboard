@@ -1,1 +1,1 @@
-export type LeaderboardGameType = 'Crazy Pool' | 'Activity Game';
+export type LeaderboardGameType = 'Crazy Pool' | 'Activity Game'; 
