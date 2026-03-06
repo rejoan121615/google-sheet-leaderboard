@@ -1,0 +1,1 @@
+export type LeaderboardGameType = 'Crazy Pool' | 'Activity Game';

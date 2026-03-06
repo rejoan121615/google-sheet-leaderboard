@@ -1,0 +1,2 @@
+export const crazyPoolSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfGZxoWYtSGc8L7w78idmshq_boAvCmTqK98uKvaRoPtGe0q-dqBOlJpsVf5GDxVAKI4whw82g93YX/pub?gid=549202704&single=true&output=csv';
+export const activityGameSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfGZxoWYtSGc8L7w78idmshq_boAvCmTqK98uKvaRoPtGe0q-dqBOlJpsVf5GDxVAKI4whw82g93YX/pub?gid=1946224088&single=true&output=csv';

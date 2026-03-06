@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "rootDir": "./ts",
+    "outDir": "./script",
+    "module": "esnext",
+    "target": "es2023",
+    "types": [],
+    "lib": ["DOM", "ES2023"],
+    "strict": true,
+  },
+  "include": ["ts/**/**/*.ts", "ts/**/*.d.ts"],
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Bar Leaderboard</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div class="leaderboard-container">
+        <!-- Crazy Pool Leaderboard -->
+        <div class="leaderboard" id="crazy-pool" data-visible="true">
+            <div class="header">
+                <h1 class="title">Crazy Pool</h1>
+                <p class="subtitle">Lowest Score Wins</p>
+            </div>
+            <div class="leaderboard-content">
+                <div class="leaderboard-header">
+                    <span class="rank">Rank</span>
+                    <span class="player">Player</span>
+                    <span class="score">Score</span>
+                </div>
+                <div class="entries" id="crazy-pool-entries">
+                    <!-- Entries will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Game Leaderboard -->
+        <div class="leaderboard" id="activity-game" data-visible="false">
+            <div class="header">
+                <h1 class="title">Activity Game</h1>
+                <p class="subtitle">Highest Score Wins</p>
+            </div>
+            <div class="leaderboard-content">
+                <div class="leaderboard-header">
+                    <span class="rank">Rank</span>
+                    <span class="player">Player</span>
+                    <span class="score">Score</span>
+                </div>
+                <div class="entries" id="activity-game-entries">
+                    <!-- Entries will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading leaderboards...</p>
+    </div>
+
+    <!-- Error message -->
+    <div class="error" id="error" style="display: none;">
+        <p>Unable to load leaderboard data</p>
+    </div>
+
+    <script type="module" src="./script/script.js"></script>
+</body>
+</html>
