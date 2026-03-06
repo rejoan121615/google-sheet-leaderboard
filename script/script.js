@@ -11,8 +11,8 @@ class Leaderboard {
         "Approve",
     ];
     async appStart() {
-        setInterval(() => {
-            this.fetchData();
+        setInterval(async () => {
+            await this.fetchData();
             console.log("Data fetching started...");
             console.log("Current Leaderboard:", this.currentLeaderboard);
             console.log("Activity Game Data:", this.activityGameData);
@@ -20,8 +20,11 @@ class Leaderboard {
         }, 10000);
     }
     async fetchData() {
-        Promise.all([fetch(activityGameSheetURL), fetch(crazyPoolSheetURL)])
-            .then(async ([activityGameResponse, crazyPoolResponse]) => {
+        try {
+            const [activityGameResponse, crazyPoolResponse] = await Promise.all([
+                fetch(activityGameSheetURL),
+                fetch(crazyPoolSheetURL),
+            ]);
             if (!activityGameResponse.ok || !crazyPoolResponse.ok) {
                 throw new Error("Failed to fetch data");
             }
@@ -29,10 +32,10 @@ class Leaderboard {
             const crazyPoolData = await this.dataFilterAndSort(crazyPoolResponse, "high-to-low");
             this.activityGameData = activityGameData;
             this.crazyPoolData = crazyPoolData;
-        })
-            .catch((error) => {
+        }
+        catch (error) {
             console.error("Error fetching data:", error);
-        });
+        }
     }
     // filter and serialize data from large to small
     async dataFilterAndSort(response, type) {
