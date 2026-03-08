@@ -5,7 +5,7 @@
 }
 
 :root {
-  --font-size-serial: 2.5rem;
+  --font-size-serial: 45px;
   --font-size-player: 40px;
   --font-size-score: 55px;
   --font-title: 65px;
@@ -88,10 +88,9 @@ body {
   justify-content: center;
 }
 .leaderboard .content .container {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: repeat(5, 1fr);
-  row-gap: 2vh;
+  display: flex;
+  flex-flow: column wrap;
+  row-gap: 15px;
 }
 .leaderboard .score-row {
   font-size: 30px;
@@ -124,9 +123,9 @@ body {
   font-size: var(--font-size-player);
 }
 .leaderboard .score-row .score {
-  flex: 1;
   text-align: right;
   font-size: var(--font-size-score);
+  padding-top: 0.5%;
 }
 .leaderboard .score-row:first-child {
   border: 2px solid var(--color-accent);
@@ -139,6 +138,7 @@ body {
 }
 .leaderboard .score-row:first-child .score {
   color: var(--color-accent);
+  padding-top: 0;
 }
 .leaderboard .footer {
   display: flex;
