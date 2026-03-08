@@ -1,48 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Bar Leaderboard</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
     <div class="leaderboard-container">
         <!-- Crazy Pool Leaderboard -->
         <div class="leaderboard" id="crazy-pool" data-visible="true">
             <div class="header">
-                <h1 class="title">Crazy Pool</h1>
-                <p class="subtitle">Lowest Score Wins</p>
+                <div class="container">
+                    <h1 class="title">Crazy Pool</h1>
+                    <!-- <p class="score-order">Lowest Score Wins</p> -->
+                    <div class="live-batch">
+                        <div class="dot"></div>
+                        <h3>Live</h3>
+                    </div>
+                </div>
             </div>
-            <div class="leaderboard-content">
-                <div class="leaderboard-header">
-                    <span class="rank">Rank</span>
-                    <span class="player">Player</span>
-                    <span class="score">Score</span>
+            <div class="content">
+                <div class="container">
+                    <div class="score-row">
+                        <!-- serial number  -->
+                        <div class="name">
+                            <div class="serial">1</div>
+                            <div class="player">David Bakeham</div>
+                        </div>
+                        <div class="score">12,250</div>
+                    </div>
+                    <div class="score-row">
+                        <!-- serial number  -->
+                        <div class="name">
+                            <div class="serial">2</div>
+                            <div class="player">Sarah Mitchell</div>
+                        </div>
+                        <div class="score">12,250</div>
+                    </div>
+                    <div class="score-row">
+                        <!-- serial number  -->
+                        <div class="name">
+                            <div class="serial">3</div>
+                            <div class="player">James Rodriguez</div>
+                        </div>
+                        <div class="score">12,250</div>
+                    </div>
+                    <div class="score-row">
+                        <!-- serial number  -->
+                        <div class="name">
+                            <div class="serial">4</div>
+                            <div class="player">Emma Thompson</div>
+                        </div>
+                        <div class="score">12,250</div>
+                    </div>
+                    <div class="score-row">
+                        <!-- serial number  -->
+                        <div class="name">
+                            <div class="serial">5</div>
+                            <div class="player">Michael Chen</div>
+                        </div>
+                        <div class="score">12,250</div>
+                    </div>
                 </div>
-                <div class="entries" id="crazy-pool-entries">
-                    <!-- Entries will be populated by JavaScript -->
+            </div>
+
+            <div class="footer">
+                <div class="container">
+                    <div class="refresh-timer">
+                        <h3>Next board refresh</h3>
+                        <h6 class="timer"><span>15</span> sec</h6>
+                    </div>
                 </div>
+                <div class="progress"></div>
             </div>
         </div>
 
-        <!-- Activity Game Leaderboard -->
-        <div class="leaderboard" id="activity-game" data-visible="false">
-            <div class="header">
-                <h1 class="title">Activity Game</h1>
-                <p class="subtitle">Highest Score Wins</p>
-            </div>
-            <div class="leaderboard-content">
-                <div class="leaderboard-header">
-                    <span class="rank">Rank</span>
-                    <span class="player">Player</span>
-                    <span class="score">Score</span>
-                </div>
-                <div class="entries" id="activity-game-entries">
-                    <!-- Entries will be populated by JavaScript -->
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Loading indicator -->
@@ -52,10 +87,11 @@
     </div>
 
     <!-- Error message -->
-    <div class="error" id="error" style="display: none;">
+    <!-- <div class="error" id="error">
         <p>Unable to load leaderboard data</p>
-    </div>
+    </div> -->
 
-    <script type="module" src="./script/script.js"></script>
+    <!-- <script type="module" src="./script/script.js"></script> -->
 </body>
+
 </html>

@@ -11,13 +11,19 @@ class Leaderboard {
         "Approve",
     ];
     async appStart() {
+        // render for the first time 
+        this.leaderboardController();
+        // fetch after every 10 seconds to update the leaderboard data 
         setInterval(async () => {
-            await this.fetchData();
-            console.log("Data fetching started...");
-            console.log("Current Leaderboard:", this.currentLeaderboard);
-            console.log("Activity Game Data:", this.activityGameData);
-            console.log("Crazy Pool Data:", this.crazyPoolData);
+            this.leaderboardController();
         }, 10000);
+    }
+    async leaderboardController() {
+        await this.fetchData();
+        console.log("Data fetching started...");
+        console.log("Current Leaderboard:", this.currentLeaderboard);
+        console.log("Activity Game Data:", this.activityGameData);
+        console.log("Crazy Pool Data:", this.crazyPoolData);
     }
     async fetchData() {
         try {
@@ -36,6 +42,8 @@ class Leaderboard {
         catch (error) {
             console.error("Error fetching data:", error);
         }
+    }
+    async switchLeaderboardUi() {
     }
     // filter and serialize data from large to small
     async dataFilterAndSort(response, type) {
