@@ -1,1 +1,1 @@
-export type LeaderboardGameType = 'Crazy Pool' | 'Activity Game'; 
+export type LeaderboardGameType = 'crazy-pool' | 'activity-game';  // this name should be matched with the id of the div in index.html

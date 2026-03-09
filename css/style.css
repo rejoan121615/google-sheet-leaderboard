@@ -50,6 +50,10 @@ body {
   height: 100%;
   display: grid;
   grid-template-rows: 15vh 1fr 10vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background-color: #121212;
 }
 .leaderboard .header,
 .leaderboard .footer {
@@ -178,19 +182,6 @@ body {
   animation: progressAnim 15s linear infinite;
 }
 
-/* Leaderboard Cards */
-/* Header Styling */
-/* @keyframes glow {
-    from {
-        filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.5));
-    }
-    to {
-        filter: drop-shadow(0 0 40px rgba(255, 0, 255, 0.8));
-    }
-} */
-/* Leaderboard Content */
-/* Header Row */
-/* Entry Rows */
 /* Loading Screen */
 .loading {
   position: fixed;
@@ -200,7 +191,6 @@ body {
   height: 100%;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
   display: flex;
-  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -244,6 +234,23 @@ body {
   font-size: 2rem;
   color: #ff0000;
   z-index: 1001;
+}
+
+body .loading, body .leaderboard {
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+body.loading #loading {
+  opacity: 1;
+}
+
+body.crazy-pool #crazy-pool {
+  opacity: 1;
+}
+
+body.activity-game #activity-game {
+  opacity: 1;
 }
 
 /*# sourceMappingURL=style.css.map */
