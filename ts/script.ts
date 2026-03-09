@@ -26,7 +26,6 @@ class Leaderboard {
   async leaderboardController() {
     await this.fetchData();
     await this.switchLeaderboardUi();
-    await this.updateUiWithData();
     console.log("Data fetching started...");
     console.log("Current Leaderboard:", this.currentLeaderboard);
     console.log("Activity Game Data:", this.activityGameData);
@@ -34,6 +33,7 @@ class Leaderboard {
   }
 
   async fetchData() {
+    console.log('Fetching data...');
     try {
       const [activityGameResponse, crazyPoolResponse] = await Promise.all([
         fetch(activityGameSheetURL),
@@ -63,8 +63,17 @@ class Leaderboard {
   async switchLeaderboardUi() {
     const getBody = document.querySelector("body");
     if (getBody) {
-      getBody.setAttribute("class", "");
+      // hide current leaderboard or loading spinner
+      getBody.setAttribute("class", ""); 
+
+      // update current html with the latest data
+      await this.updateUiWithData();
+
+
       const timer = setTimeout(() => {
+
+        console.log('trigger animation with set timeout')
+
         getBody.classList.add(this.currentLeaderboard);
         this.currentLeaderboard =
           this.currentLeaderboard === "activity-game"
@@ -76,6 +85,7 @@ class Leaderboard {
   }
 
   async updateUiWithData() {
+    console.log('Updating UI with data for:', this.currentLeaderboard);
     const leaderboardAsList: NodeListOf<HTMLElement> =
       document.querySelectorAll(".leaderboard");
     if (leaderboardAsList.length) {
