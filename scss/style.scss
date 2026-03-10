@@ -300,12 +300,11 @@ body {
   border-radius: 1rem;
   font-size: 2rem;
   color: #ff0000;
-  z-index: 1001;
 }
 
 
 body {
-  .loading, .leaderboard {
+  .loading, .leaderboard, .error {
     opacity: 0;
     transition: opacity 1s ease-in-out;
   }
@@ -327,3 +326,8 @@ body.activity-game {
   }
 } 
 
+body.fail {
+  .error {
+    opacity: 1;
+  }
+}

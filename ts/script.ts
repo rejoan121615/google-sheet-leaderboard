@@ -73,6 +73,10 @@ class Leaderboard {
       this.crazyPoolData = crazyPoolData;
     } catch (error) {
       console.error("Error fetching data:", error);
+      const body = document.querySelector("body");
+      if (body) {
+        body.setAttribute("class", "fail");
+      }
     }
   }
 

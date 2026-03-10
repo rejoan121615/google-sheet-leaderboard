@@ -268,10 +268,9 @@ body {
   border-radius: 1rem;
   font-size: 2rem;
   color: #ff0000;
-  z-index: 1001;
 }
 
-body .loading, body .leaderboard {
+body .loading, body .leaderboard, body .error {
   opacity: 0;
   transition: opacity 1s ease-in-out;
 }
@@ -285,6 +284,10 @@ body.crazy-pool #crazy-pool {
 }
 
 body.activity-game #activity-game {
+  opacity: 1;
+}
+
+body.fail .error {
   opacity: 1;
 }
 
