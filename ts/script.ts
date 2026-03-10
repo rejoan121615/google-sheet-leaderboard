@@ -2,8 +2,9 @@ import type { LeaderboardGameType } from "./types/global.types.js";
 import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
 
 class Leaderboard {
-  fetchTimeout: number = 25;
-  currentTimer: number = this.fetchTimeout;
+  fetchTimeout: number = 15;
+  currentTimer: number = 0;
+  runningAnimation: boolean = false;
   activityGameData: Record<string, string>[] = [];
   crazyPoolData: Record<string, string>[] = [];
   currentLeaderboard: LeaderboardGameType = "activity-game";
@@ -17,32 +18,28 @@ class Leaderboard {
 
   async appStart() {
     // render for the first time
-    this.leaderboardController();
+    // this.leaderboardController();
+    await this.fetchData();
+    await this.switchLeaderboardUi();
 
-    // interval for next refresh animation 
-    setInterval(() => {
-      // this.nextLeaderboardUi();
-      this.currentTimer = this.currentTimer > 0 ? this.currentTimer - 1 : this.fetchTimeout;
-      this.nextLeaderboardUi();
-      if (this.currentTimer === 0) {
-        this.leaderboardController();
-        this.currentTimer = this.fetchTimeout;
+    // interval for next refresh animation
+    setInterval(async () => {
+      if (this.currentTimer >= this.fetchTimeout) {
+        this.currentTimer = 0;
+        await this.switchLeaderboardUi();
+      } else {
+        // if (!this.runningAnimation) { 
+          this.currentTimer += 1;
+          await this.timeoutAndRefreshAnimation();
+        // }
       }
     }, 1000);
-
-    // fetch after every 10 seconds to update the leaderboard data
-    // setInterval(async () => {
-    //   this.leaderboardController();
-    // }, 10000);
   }
 
   async leaderboardController() {
+    this.runningAnimation = true;
     await this.fetchData();
     await this.switchLeaderboardUi();
-    console.log("Data fetching started...");
-    console.log("Current Leaderboard:", this.currentLeaderboard);
-    console.log("Activity Game Data:", this.activityGameData);
-    console.log("Crazy Pool Data:", this.crazyPoolData);
   }
 
   async fetchData() {
@@ -74,6 +71,7 @@ class Leaderboard {
   }
 
   async switchLeaderboardUi() {
+    this.runningAnimation = true;
     const getBody = document.querySelector("body");
     if (getBody) {
       // hide current leaderboard or loading spinner
@@ -85,8 +83,10 @@ class Leaderboard {
       }, 1000);
 
       const timer = setTimeout(() => {
-
-        console.log('trigger animation with set timeout', this.currentLeaderboard);
+        console.log(
+          "trigger animation with set timeout",
+          this.currentLeaderboard,
+        );
 
         getBody.classList.add(this.currentLeaderboard);
         this.currentLeaderboard =
@@ -95,6 +95,7 @@ class Leaderboard {
             : "activity-game";
         clearTimeout(timer);
         clearTimeout(leaveAnimation);
+        this.runningAnimation = false;
       }, 1500);
     }
   }
@@ -123,7 +124,7 @@ class Leaderboard {
     }
   }
 
-  // this method generate row data and insert into the leaderboard 
+  // this method generate row data and insert into the leaderboard
   async rowGenerator(parent: HTMLElement, data: Record<string, string>[]) {
     // clear / remove previous row data
     parent.innerHTML = "";
@@ -144,26 +145,32 @@ class Leaderboard {
     </div>
     `,
       );
-    }); 
+    });
   }
 
   // next refresh animation for time and progress bar in the footer
-  async nextLeaderboardUi() {
+  async timeoutAndRefreshAnimation() {
     const leaderboardList = document.querySelectorAll(".leaderboard");
     if (leaderboardList.length) {
       const leaderboardArray = Array.from(leaderboardList);
 
       leaderboardArray.forEach((leaderboard) => {
-        const leaderboardFooter: HTMLElement | null = leaderboard.querySelector(
-          ".footer",
+        const leaderboardFooter: HTMLElement | null =
+          leaderboard.querySelector(".footer");
+        const footerTimer: HTMLElement | null = leaderboard.querySelector(
+          ".footer .timer span",
         );
-        const footerTimer: HTMLElement | null = leaderboard.querySelector('.footer .timer span');
-        const footerProgress: HTMLElement | null = leaderboard.querySelector('.footer .progress-bar .progress');
+        const footerProgress: HTMLElement | null = leaderboard.querySelector(
+          ".footer .progress-bar .progress",
+        );
 
         if (leaderboardFooter && footerTimer && footerProgress) {
-          footerTimer.textContent = String(this.currentTimer);
-          footerProgress.style.width = String((100 / this.fetchTimeout) * this.currentTimer) + "%";
-        };
+          footerTimer.textContent = String(
+            this.fetchTimeout - this.currentTimer,
+          );
+          footerProgress.style.width =
+            String((100 / this.fetchTimeout) * this.currentTimer) + "%";
+        }
       });
     }
   }
