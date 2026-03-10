@@ -2,8 +2,9 @@ import type { LeaderboardGameType } from "./types/global.types.js";
 import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
 
 class Leaderboard {
-  fetchTimeout: number = 15;
+  leaderboardTimeout: number = 15;
   currentTimer: number = 0;
+  loadDataTimeout: number = 45;
   runningAnimation: boolean = false;
   activityGameData: Record<string, string>[] = [];
   crazyPoolData: Record<string, string>[] = [];
@@ -22,18 +23,23 @@ class Leaderboard {
     await this.fetchData();
     await this.switchLeaderboardUi();
 
-    // interval for next refresh animation
+    // change leaderboard ui 
     setInterval(async () => {
-      if (this.currentTimer >= this.fetchTimeout) {
+      if (this.currentTimer >= this.leaderboardTimeout) {
         this.currentTimer = 0;
         await this.switchLeaderboardUi();
       } else {
-        // if (!this.runningAnimation) { 
           this.currentTimer += 1;
           await this.timeoutAndRefreshAnimation();
-        // }
       }
     }, 1000);
+
+
+
+    // pull data from google sheet 
+    setTimeout( async () => {
+      await this.fetchData();
+    }, (this.loadDataTimeout * 1000));
   }
 
   async leaderboardController() {
@@ -166,10 +172,10 @@ class Leaderboard {
 
         if (leaderboardFooter && footerTimer && footerProgress) {
           footerTimer.textContent = String(
-            this.fetchTimeout - this.currentTimer,
+            this.leaderboardTimeout - this.currentTimer,
           );
           footerProgress.style.width =
-            String((100 / this.fetchTimeout) * this.currentTimer) + "%";
+            String((100 / this.leaderboardTimeout) * this.currentTimer) + "%";
         }
       });
     }
