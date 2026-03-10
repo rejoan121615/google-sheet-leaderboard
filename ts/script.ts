@@ -4,7 +4,7 @@ import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
 class Leaderboard {
   leaderboardTimeout: number = 15;
   currentTimer: number = 0;
-  loadDataTimeout: number = 45;
+  loadDataTimeout: number = 15;
   runningAnimation: boolean = false;
   activityGameData: Record<string, string>[] = [];
   crazyPoolData: Record<string, string>[] = [];
@@ -12,43 +12,37 @@ class Leaderboard {
   dataHeader: string[] = [
     "Timestamp",
     "Player Name",
-    "Game Type",
     "Score",
     "Approve",
   ];
 
   async appStart() {
-    // render for the first time
-    // this.leaderboardController();
-    await this.fetchData();
+    const isDataFetched = await this.fetchData();
+    if (!isDataFetched) {
+      this.showErrorMessage();
+      return;
+    }
     await this.switchLeaderboardUi();
 
-    // change leaderboard ui 
+    // change leaderboard ui
     setInterval(async () => {
       if (this.currentTimer >= this.leaderboardTimeout) {
         this.currentTimer = 0;
         await this.switchLeaderboardUi();
       } else {
-          this.currentTimer += 1;
-          await this.timeoutAndRefreshAnimation();
+        this.currentTimer += 1;
+        await this.timeoutAndRefreshAnimation();
       }
     }, 1000);
 
-
-
-    // pull data from google sheet 
-    setTimeout( async () => {
+    // pull data from google sheet
+    setTimeout(async () => {
       await this.fetchData();
-    }, (this.loadDataTimeout * 1000));
+    }, this.loadDataTimeout * 1000);
   }
 
-  async leaderboardController() {
-    this.runningAnimation = true;
-    await this.fetchData();
-    await this.switchLeaderboardUi();
-  }
 
-  async fetchData() {
+  async fetchData() : Promise<boolean> {
     console.log("Fetching data...");
     try {
       const [activityGameResponse, crazyPoolResponse] = await Promise.all([
@@ -71,12 +65,17 @@ class Leaderboard {
 
       this.activityGameData = activityGameData;
       this.crazyPoolData = crazyPoolData;
+      return true;
     } catch (error) {
       console.error("Error fetching data:", error);
-      const body = document.querySelector("body");
-      if (body) {
-        body.setAttribute("class", "fail");
-      }
+      return false;
+    }
+  }
+
+  showErrorMessage () {
+    const body = document.querySelector("body");
+    if (body) {
+      body.setAttribute("class", "fail");
     }
   }
 
