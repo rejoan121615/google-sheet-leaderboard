@@ -166,14 +166,13 @@ body {
   color: var(--color-primary);
   font-size: var(--font-timer);
 }
-.leaderboard .footer .progress {
+.leaderboard .footer .progress-bar {
   width: 100%;
   height: 10px;
   background-color: var(--color-primary-dark);
   overflow: hidden;
-  margin-top: 1rem;
 }
-.leaderboard .footer .progress::before {
+.leaderboard .footer .progress-bar .progress {
   content: "";
   display: block;
   height: 100%;

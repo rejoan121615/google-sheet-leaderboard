@@ -2,6 +2,8 @@ import type { LeaderboardGameType } from "./types/global.types.js";
 import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
 
 class Leaderboard {
+  fetchTimeout: number = 25;
+  currentTimer: number = this.fetchTimeout;
   activityGameData: Record<string, string>[] = [];
   crazyPoolData: Record<string, string>[] = [];
   currentLeaderboard: LeaderboardGameType = "activity-game";
@@ -17,10 +19,21 @@ class Leaderboard {
     // render for the first time
     this.leaderboardController();
 
+    // interval for next refresh animation 
+    setInterval(() => {
+      // this.nextLeaderboardUi();
+      this.currentTimer = this.currentTimer > 0 ? this.currentTimer - 1 : this.fetchTimeout;
+      this.nextLeaderboardUi();
+      if (this.currentTimer === 0) {
+        this.leaderboardController();
+        this.currentTimer = this.fetchTimeout;
+      }
+    }, 1000);
+
     // fetch after every 10 seconds to update the leaderboard data
-    setInterval(async () => {
-      this.leaderboardController();
-    }, 10000);
+    // setInterval(async () => {
+    //   this.leaderboardController();
+    // }, 10000);
   }
 
   async leaderboardController() {
@@ -33,7 +46,7 @@ class Leaderboard {
   }
 
   async fetchData() {
-    console.log('Fetching data...');
+    console.log("Fetching data...");
     try {
       const [activityGameResponse, crazyPoolResponse] = await Promise.all([
         fetch(activityGameSheetURL),
@@ -64,15 +77,16 @@ class Leaderboard {
     const getBody = document.querySelector("body");
     if (getBody) {
       // hide current leaderboard or loading spinner
-      getBody.setAttribute("class", ""); 
+      getBody.setAttribute("class", "");
 
-      // update current html with the latest data
-      await this.updateUiWithData();
-
+      // wait for current animation complete and  update html with the latest data
+      const leaveAnimation = setTimeout(() => {
+        this.updateUiWithData();
+      }, 1000);
 
       const timer = setTimeout(() => {
 
-        console.log('trigger animation with set timeout')
+        console.log('trigger animation with set timeout', this.currentLeaderboard);
 
         getBody.classList.add(this.currentLeaderboard);
         this.currentLeaderboard =
@@ -80,12 +94,14 @@ class Leaderboard {
             ? "crazy-pool"
             : "activity-game";
         clearTimeout(timer);
+        clearTimeout(leaveAnimation);
       }, 1500);
     }
   }
 
+  // this method updates the UI with the latest data based on the current leaderboard type
   async updateUiWithData() {
-    console.log('Updating UI with data for:', this.currentLeaderboard);
+    console.log("Updating UI with data for:", this.currentLeaderboard);
     const leaderboardAsList: NodeListOf<HTMLElement> =
       document.querySelectorAll(".leaderboard");
     if (leaderboardAsList.length) {
@@ -107,6 +123,7 @@ class Leaderboard {
     }
   }
 
+  // this method generate row data and insert into the leaderboard 
   async rowGenerator(parent: HTMLElement, data: Record<string, string>[]) {
     // clear / remove previous row data
     parent.innerHTML = "";
@@ -127,7 +144,28 @@ class Leaderboard {
     </div>
     `,
       );
-    });
+    }); 
+  }
+
+  // next refresh animation for time and progress bar in the footer
+  async nextLeaderboardUi() {
+    const leaderboardList = document.querySelectorAll(".leaderboard");
+    if (leaderboardList.length) {
+      const leaderboardArray = Array.from(leaderboardList);
+
+      leaderboardArray.forEach((leaderboard) => {
+        const leaderboardFooter: HTMLElement | null = leaderboard.querySelector(
+          ".footer",
+        );
+        const footerTimer: HTMLElement | null = leaderboard.querySelector('.footer .timer span');
+        const footerProgress: HTMLElement | null = leaderboard.querySelector('.footer .progress-bar .progress');
+
+        if (leaderboardFooter && footerTimer && footerProgress) {
+          footerTimer.textContent = String(this.currentTimer);
+          footerProgress.style.width = String((100 / this.fetchTimeout) * this.currentTimer) + "%";
+        };
+      });
+    }
   }
 
   // filter and serialize data from large to small
