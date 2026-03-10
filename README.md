@@ -8,9 +8,8 @@ Your Google Sheet must have this exact first row (case and spacing matter):
 
 1. `Timestamp`
 2. `Player Name`
-3. `Game Type`
-4. `Score`
-5. `Approve`
+3. `Score`
+4. `Approve`
 
 The script maps columns by these exact header names in `ts/script.ts`.
 

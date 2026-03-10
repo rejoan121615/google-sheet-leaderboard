@@ -2,7 +2,7 @@ import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
 class Leaderboard {
     leaderboardTimeout = 15;
     currentTimer = 0;
-    loadDataTimeout = 45;
+    loadDataTimeout = 15;
     runningAnimation = false;
     activityGameData = [];
     crazyPoolData = [];
@@ -10,16 +10,17 @@ class Leaderboard {
     dataHeader = [
         "Timestamp",
         "Player Name",
-        "Game Type",
         "Score",
         "Approve",
     ];
     async appStart() {
-        // render for the first time
-        // this.leaderboardController();
-        await this.fetchData();
+        const isDataFetched = await this.fetchData();
+        if (!isDataFetched) {
+            this.showErrorMessage();
+            return;
+        }
         await this.switchLeaderboardUi();
-        // change leaderboard ui 
+        // change leaderboard ui
         setInterval(async () => {
             if (this.currentTimer >= this.leaderboardTimeout) {
                 this.currentTimer = 0;
@@ -30,15 +31,10 @@ class Leaderboard {
                 await this.timeoutAndRefreshAnimation();
             }
         }, 1000);
-        // pull data from google sheet 
+        // pull data from google sheet
         setTimeout(async () => {
             await this.fetchData();
-        }, (this.loadDataTimeout * 1000));
-    }
-    async leaderboardController() {
-        this.runningAnimation = true;
-        await this.fetchData();
-        await this.switchLeaderboardUi();
+        }, this.loadDataTimeout * 1000);
     }
     async fetchData() {
         console.log("Fetching data...");
@@ -54,13 +50,17 @@ class Leaderboard {
             const crazyPoolData = await this.dataFilterAndSort(crazyPoolResponse, "low-to-high");
             this.activityGameData = activityGameData;
             this.crazyPoolData = crazyPoolData;
+            return true;
         }
         catch (error) {
             console.error("Error fetching data:", error);
-            const body = document.querySelector("body");
-            if (body) {
-                body.setAttribute("class", "fail");
-            }
+            return false;
+        }
+    }
+    showErrorMessage() {
+        const body = document.querySelector("body");
+        if (body) {
+            body.setAttribute("class", "fail");
         }
     }
     async switchLeaderboardUi() {

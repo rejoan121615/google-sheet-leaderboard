@@ -241,7 +241,7 @@ body {
         height: 100%;
         width: 50%;
         background-color: var(--color-primary);
-        animation: progressAnim 15s linear infinite;
+        transition: width 1s linear;
       }
     }
   }

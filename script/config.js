@@ -1,2 +1,2 @@
-export const crazyPoolSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfGZxoWYtSGc8L7w78idmshq_boAvCmTqK98uKvaRoPtGe0q-dqBOlJpsVf5GDxVAKI4whw82g93YX/pub?gid=549202704&single=true&output=csv';
-export const activityGameSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfGZxoWYtSGc8L7w78idmshq_boAvCmTqK98uKvaRoPtGe0q-dqBOlJpsVf5GDxVAKI4whw82g93YX/pub?gid=1946224088&single=true&output=csv';
+export const crazyPoolSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=133336340&single=true&output=csv';
+export const activityGameSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=1011544952&single=true&output=csv';
