@@ -63,6 +63,11 @@ class Leaderboard {
         "low-to-high",
       );
 
+      console.log("Data fetched successfully:", {
+        activityGameData,
+        crazyPoolData,
+      });
+
       this.activityGameData = activityGameData;
       this.crazyPoolData = crazyPoolData;
       return true;
@@ -201,12 +206,15 @@ class Leaderboard {
           ]),
         );
       })
+      .filter((row) => {
+        console.log("Filtering row:", row);
+        return row.Approve.trim().toLowerCase() === "yes";
+      })
       .sort((a, b) => {
         const scoreA = Number(String(a.Score).replace(/\r/g, "").trim());
         const scoreB = Number(String(b.Score).replace(/\r/g, "").trim());
         return type === "high-to-low" ? scoreB - scoreA : scoreA - scoreB;
-      })
-      .filter((row) => row.Approve.toLowerCase() === "yes");
+      });
 
     return filteredRow.slice(0, 5); // return first 5 rows
   }

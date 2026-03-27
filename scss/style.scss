@@ -30,7 +30,11 @@ body {
   justify-content: center;
 }
 
-
+@mixin screenSmall {
+  @media (max-width: 1700px) {
+    @content;
+  }
+}
 
 @mixin screen4k {
   @media (min-width: 2560px) {
@@ -46,6 +50,9 @@ body {
 
 .title {
   font-size: var(--font-title);
+  @include screenSmall() {
+    font-size: 30px;
+  }
 }
 
 .leaderboard-container {
@@ -64,7 +71,11 @@ body {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: clamp(100px, 12vh, 300px) minmax(75vh, 1fr) clamp(80px, 10vh, 150px);
+  grid-template-rows: clamp(100px, 12vh, 300px) minmax(75vh, 1fr) clamp(
+      80px,
+      10vh,
+      150px
+    );
   position: fixed;
   left: 0;
   top: 0;
@@ -108,6 +119,10 @@ body {
           border-radius: 50%;
           background-color: var(--color-primary);
           margin-right: 25px;
+          @include screenSmall() {
+            width: 12px;
+            height: 12px;
+          }
         }
 
         h3 {
@@ -136,11 +151,14 @@ body {
     display: flex;
     border-radius: 20px;
     box-shadow:
-    0 0 10px rgba(13, 242, 242, 0.3),
-    inset 0 0 5px 1px rgba(13, 242, 242, 0.2);
-    
-    padding: 20px;
+      0 0 10px rgba(13, 242, 242, 0.3),
+      inset 0 0 5px 1px rgba(13, 242, 242, 0.2);
 
+    padding: 20px;
+    @include screenSmall() {
+      padding: 12px;
+      border-radius: 10px;
+    }
     @include screen4k {
       padding: 20px 35px;
       padding: clamp(20px, 1vw, 35px) clamp(35px, 1vw, 55px);
@@ -155,6 +173,11 @@ body {
       width: clamp(75px, 4vw, 200px);
       height: clamp(75px, 4vw, 200px);
       font-size: var(--font-size-serial);
+      @include screenSmall() {
+        width: 40px;
+        height: 40px;
+        font-size: 25px;
+      }
       color: var(--color-primary);
       background-color: var(--color-primary-dark);
       display: flex;
@@ -164,7 +187,7 @@ body {
       @include screen4k {
         margin-right: 50px;
       }
-      @include screenMax  {
+      @include screenMax {
         margin-right: 60px;
       }
       clip-path: polygon(
@@ -180,10 +203,16 @@ body {
     }
     .player {
       font-size: var(--font-size-player);
+      @include screenSmall {
+        font-size: 20px;
+      }
     }
     .score {
       text-align: right;
       font-size: var(--font-size-score);
+      @include screenSmall {
+        font-size: 25px;
+      }
     }
 
     &:first-child {
@@ -221,11 +250,17 @@ body {
       h3 {
         color: var(--color-off);
         font-size: var(--font-footer);
+        @include screenSmall() {
+          font-size: 18px;
+        }
       }
 
       .timer {
         color: var(--color-primary);
         font-size: var(--font-timer);
+        @include screenSmall() {
+          font-size: 20px;
+        }
       }
     }
 
@@ -235,7 +270,7 @@ body {
       background-color: var(--color-primary-dark);
       overflow: hidden;
 
-      .progress{
+      .progress {
         content: "";
         display: block;
         height: 100%;
@@ -246,7 +281,6 @@ body {
     }
   }
 }
-
 
 /* Loading Screen */
 .loading {
@@ -302,9 +336,10 @@ body {
   color: #ff0000;
 }
 
-
 body {
-  .loading, .leaderboard, .error {
+  .loading,
+  .leaderboard,
+  .error {
     opacity: 0;
     transition: opacity 1s ease-in-out;
   }
@@ -318,13 +353,13 @@ body.crazy-pool {
   #crazy-pool {
     opacity: 1;
   }
-} 
+}
 
 body.activity-game {
   #activity-game {
     opacity: 1;
   }
-} 
+}
 
 body.fail {
   .error {

@@ -48,6 +48,10 @@ class Leaderboard {
             }
             const activityGameData = await this.dataFilterAndSort(activityGameResponse, "high-to-low");
             const crazyPoolData = await this.dataFilterAndSort(crazyPoolResponse, "low-to-high");
+            console.log("Data fetched successfully:", {
+                activityGameData,
+                crazyPoolData,
+            });
             this.activityGameData = activityGameData;
             this.crazyPoolData = crazyPoolData;
             return true;
@@ -149,12 +153,15 @@ class Leaderboard {
                 row.split(",").map((item) => item.trimEnd())[index],
             ]));
         })
+            .filter((row) => {
+            console.log("Filtering row:", row);
+            return row.Approve.trim().toLowerCase() === "yes";
+        })
             .sort((a, b) => {
             const scoreA = Number(String(a.Score).replace(/\r/g, "").trim());
             const scoreB = Number(String(b.Score).replace(/\r/g, "").trim());
             return type === "high-to-low" ? scoreB - scoreA : scoreA - scoreB;
-        })
-            .filter((row) => row.Approve.toLowerCase() === "yes");
+        });
         return filteredRow.slice(0, 5); // return first 5 rows
     }
 }
