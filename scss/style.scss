@@ -36,6 +36,12 @@ body {
   }
 }
 
+@mixin screenHd {
+  @media (min-width: 1701px) {
+    @content;
+  }
+}
+
 @mixin screen4k {
   @media (min-width: 2560px) {
     @content;
@@ -96,39 +102,18 @@ body {
         flex: 1;
       }
 
-      .live-batch {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: var(--color-primary-dark);
-        border: 1px solid var(--color-primary);
-        border-radius: 50px;
-        padding: 10px 20px;
-        @include screen4k {
-          padding: 15px 30px;
-          border-width: 2px;
-        }
-        @include screenMax {
-          padding: 25px 40px;
-        }
-        .dot {
-          width: 0.75vw;
-          height: 0.75vw;
-          max-width: 35px;
-          max-height: 35px;
-          border-radius: 50%;
-          background-color: var(--color-primary);
-          margin-right: 25px;
-          @include screenSmall() {
-            width: 12px;
-            height: 12px;
-          }
-        }
+      .board-order {
+        color: var(--color-primary);
+        text-transform: uppercase;
+        font-size: var(--font-live);
+      }
 
-        h3 {
-          color: var(--color-primary);
-          text-transform: uppercase;
-          font-size: var(--font-live);
+      .logo {
+        width: initial;
+        height: 80%;
+        img {
+          width: 100%;
+          height: 100%;
         }
       }
     }
@@ -172,24 +157,12 @@ body {
       aspect-ratio: 16 / 9;
       width: clamp(75px, 4vw, 200px);
       height: clamp(75px, 4vw, 200px);
-      font-size: var(--font-size-serial);
-      @include screenSmall() {
-        width: 40px;
-        height: 40px;
-        font-size: 25px;
-      }
       color: var(--color-primary);
       background-color: var(--color-primary-dark);
       display: flex;
       align-items: center;
       justify-content: center;
       margin-right: 40px;
-      @include screen4k {
-        margin-right: 50px;
-      }
-      @include screenMax {
-        margin-right: 60px;
-      }
       clip-path: polygon(
         50% 0%,
         90% 20%,
@@ -200,12 +173,33 @@ body {
         10% 20%
       );
       font-weight: 900;
+      @include screenSmall() {
+        width: 40px;
+        height: 40px;
+        font-size: 25px;
+      }
+      @include screenHd() {
+        font-size: clamp(45px, 2.5vw, 55px);
+      }
+      @include screen4k {
+        font-size: var(--font-size-serial);
+        margin-right: 50px;
+      }
+      @include screenMax {
+        margin-right: 60px;
+      }
     }
     .player {
-      font-size: var(--font-size-player);
       @include screenSmall {
         font-size: 20px;
       }
+      @include screenHd() {
+        font-size: clamp(40px, 2.5vw, 50px);
+      }
+      @include screen4k() {
+        font-size: var(--font-size-player);
+      }
+
     }
     .score {
       text-align: right;
