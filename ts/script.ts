@@ -28,6 +28,52 @@ class Leaderboard {
   uiSwitchIntervalId: number | null = null;
   dataRefreshIntervalId: number | null = null;
 
+  async fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await fetch(url, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }
+
+  parseCsvLine(line: string): string[] {
+    const values: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index];
+      const nextChar = line[index + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          index += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (char === "," && !inQuotes) {
+        values.push(current);
+        current = "";
+        continue;
+      }
+
+      current += char;
+    }
+
+    values.push(current);
+    return values;
+  }
+
   async appStart() {
     if (!this.dashboardConfigs.length) {
       this.showErrorMessage();
@@ -55,8 +101,8 @@ class Leaderboard {
         this.currentTimer = 0;
         await this.switchLeaderboardUi();
       } else {
-        this.currentTimer += 1;
         await this.timeoutAndRefreshAnimation();
+        this.currentTimer += 1;
       }
     }, 1000);
 
@@ -90,7 +136,7 @@ class Leaderboard {
     try {
       const resultList = await Promise.all(
         this.dashboardConfigs.map(async (config) => {
-          const response = await fetch(config.sheetURL, { cache: "no-store" });
+          const response = await this.fetchWithTimeout(config.sheetURL, 10000);
           if (!response.ok) {
             throw new Error(`Failed to fetch data for ${config.id}`);
           }
@@ -235,9 +281,11 @@ class Leaderboard {
         );
 
         if (footerTimer && footerProgress) {
-          footerTimer.textContent = String(
+          const remainingSeconds = Math.max(
+            1,
             this.leaderboardTimeout - this.currentTimer,
           );
+          footerTimer.textContent = String(remainingSeconds);
           footerProgress.style.width =
             String((100 / this.leaderboardTimeout) * this.currentTimer) + "%";
         }
@@ -259,7 +307,7 @@ class Leaderboard {
 
     const filteredRow = rows
       .map((row) => {
-        const values = row.split(",").map((item) => item.trim());
+        const values = this.parseCsvLine(row).map((item) => item.trim());
         const rowData = Object.fromEntries(
           this.dataHeader.map((header, index) => [header, values[index] ?? ""]),
         );

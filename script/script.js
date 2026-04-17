@@ -16,6 +16,46 @@ class Leaderboard {
     ];
     uiSwitchIntervalId = null;
     dataRefreshIntervalId = null;
+    async fetchWithTimeout(url, timeoutMs) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            return await fetch(url, {
+                cache: "no-store",
+                signal: controller.signal,
+            });
+        }
+        finally {
+            window.clearTimeout(timeoutId);
+        }
+    }
+    parseCsvLine(line) {
+        const values = [];
+        let current = "";
+        let inQuotes = false;
+        for (let index = 0; index < line.length; index += 1) {
+            const char = line[index];
+            const nextChar = line[index + 1];
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    current += '"';
+                    index += 1;
+                }
+                else {
+                    inQuotes = !inQuotes;
+                }
+                continue;
+            }
+            if (char === "," && !inQuotes) {
+                values.push(current);
+                current = "";
+                continue;
+            }
+            current += char;
+        }
+        values.push(current);
+        return values;
+    }
     async appStart() {
         if (!this.dashboardConfigs.length) {
             this.showErrorMessage();
@@ -41,8 +81,8 @@ class Leaderboard {
                 await this.switchLeaderboardUi();
             }
             else {
-                this.currentTimer += 1;
                 await this.timeoutAndRefreshAnimation();
+                this.currentTimer += 1;
             }
         }, 1000);
         // Refresh data forever and keep last known data when network errors happen.
@@ -68,7 +108,7 @@ class Leaderboard {
         let hasAtLeastOneSuccess = false;
         try {
             const resultList = await Promise.all(this.dashboardConfigs.map(async (config) => {
-                const response = await fetch(config.sheetURL, { cache: "no-store" });
+                const response = await this.fetchWithTimeout(config.sheetURL, 10000);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch data for ${config.id}`);
                 }
@@ -174,7 +214,8 @@ class Leaderboard {
                 const footerTimer = leaderboard.querySelector(".footer .timer span");
                 const footerProgress = leaderboard.querySelector(".footer .progress-bar .progress");
                 if (footerTimer && footerProgress) {
-                    footerTimer.textContent = String(this.leaderboardTimeout - this.currentTimer);
+                    const remainingSeconds = Math.max(1, this.leaderboardTimeout - this.currentTimer);
+                    footerTimer.textContent = String(remainingSeconds);
                     footerProgress.style.width =
                         String((100 / this.leaderboardTimeout) * this.currentTimer) + "%";
                 }
@@ -191,7 +232,7 @@ class Leaderboard {
             .slice(1);
         const filteredRow = rows
             .map((row) => {
-            const values = row.split(",").map((item) => item.trim());
+            const values = this.parseCsvLine(row).map((item) => item.trim());
             const rowData = Object.fromEntries(this.dataHeader.map((header, index) => [header, values[index] ?? ""]));
             return rowData;
         })

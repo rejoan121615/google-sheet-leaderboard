@@ -23,7 +23,7 @@ Follow these rules so `ts/script.ts` can parse and sort correctly:
 4. `Score` must be numeric (example: `120`, `45`, `9`).
 5. `Approve` must be `yes` (any case works: `yes`, `YES`, `Yes`) for a row to be included.
 6. Rows with `Approve` not equal to `yes` are ignored.
-7. Avoid commas in cell values (especially `Player Name`) because the parser uses a simple comma split.
+7. Commas in values are supported when Google Sheets exports the field in quotes.
 
 ## How Sorting Works
 
@@ -50,8 +50,8 @@ Then publish as CSV:
 3. Use the published CSV URL format:
    - `https://docs.google.com/spreadsheets/d/e/<PUBLISHED_ID>/pub?gid=<TAB_GID>&single=true&output=csv`
 4. Update URLs in `ts/config.ts`:
-   - `activityGameSheetURL` -> Activity Game tab CSV URL
-   - `crazyPoolSheetURL` -> Crazy Pool tab CSV URL
+   - Find the matching dashboard by `id` in `dashboardConfigs`
+   - Replace that dashboard's `sheetURL` value
 
 ## Current URL Location in Code
 
