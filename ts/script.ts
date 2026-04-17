@@ -1,31 +1,56 @@
-import type { LeaderboardGameType } from "./types/global.types.js";
-import { activityGameSheetURL, crazyPoolSheetURL } from "./config.js";
+import {
+  dashboardConfigs,
+  leaderboardDataRefreshSeconds,
+  leaderboardRotationSeconds,
+  leaderboardVisibleRows,
+} from "./config.js";
+import type {
+  DashboardConfig,
+  LeaderboardRow,
+  SortOrder,
+} from "./types/global.types.js";
 
 class Leaderboard {
-  leaderboardTimeout: number = 15;
+  leaderboardTimeout: number = leaderboardRotationSeconds;
   currentTimer: number = 0;
-  loadDataTimeout: number = 15;
+  loadDataTimeout: number = leaderboardDataRefreshSeconds;
   runningAnimation: boolean = false;
-  activityGameData: Record<string, string>[] = [];
-  crazyPoolData: Record<string, string>[] = [];
-  currentLeaderboard: LeaderboardGameType = "activity-game";
-  dataHeader: string[] = [
+  maxVisibleRows: number = leaderboardVisibleRows;
+  currentLeaderboardIndex: number = 0;
+  dashboardConfigs: DashboardConfig[] = dashboardConfigs;
+  dataByDashboardId: Record<string, LeaderboardRow[]> = {};
+  dataHeader: Array<keyof LeaderboardRow> = [
     "Timestamp",
     "Player Name",
     "Score",
     "Approve",
   ];
+  uiSwitchIntervalId: number | null = null;
+  dataRefreshIntervalId: number | null = null;
 
   async appStart() {
+    if (!this.dashboardConfigs.length) {
+      this.showErrorMessage();
+      return;
+    }
+
+    this.setBodyState("loading");
     const isDataFetched = await this.fetchData();
     if (!isDataFetched) {
       this.showErrorMessage();
       return;
     }
-    await this.switchLeaderboardUi();
+    this.setBodyState("running");
+    this.updateUiWithData();
+    this.setActiveLeaderboard(this.dashboardConfigs[this.currentLeaderboardIndex].id);
+    this.timeoutAndRefreshAnimation();
 
-    // change leaderboard ui
-    setInterval(async () => {
+    // Rotate visible leaderboard forever.
+    this.uiSwitchIntervalId = window.setInterval(async () => {
+      if (this.runningAnimation) {
+        return;
+      }
+
       if (this.currentTimer >= this.leaderboardTimeout) {
         this.currentTimer = 0;
         await this.switchLeaderboardUi();
@@ -35,142 +60,173 @@ class Leaderboard {
       }
     }, 1000);
 
-    // pull data from google sheet
-    setTimeout(async () => {
+    // Refresh data forever and keep last known data when network errors happen.
+    this.dataRefreshIntervalId = window.setInterval(async () => {
       await this.fetchData();
+      this.updateUiWithData();
     }, this.loadDataTimeout * 1000);
   }
 
+  setBodyState(type: "loading" | "fail" | "running") {
+    const body = document.body;
+    if (!body) {
+      return;
+    }
 
-  async fetchData() : Promise<boolean> {
+    if (type === "running") {
+      body.classList.remove("loading", "fail");
+      return;
+    }
+
+    body.classList.remove("loading", "fail");
+    body.classList.add(type);
+  }
+
+  async fetchData(): Promise<boolean> {
     console.log("Fetching data...");
+
+    let hasAtLeastOneSuccess = false;
+
     try {
-      const [activityGameResponse, crazyPoolResponse] = await Promise.all([
-        fetch(activityGameSheetURL),
-        fetch(crazyPoolSheetURL),
-      ]);
-
-      if (!activityGameResponse.ok || !crazyPoolResponse.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const activityGameData = await this.dataFilterAndSort(
-        activityGameResponse,
-        "high-to-low",
-      );
-      const crazyPoolData = await this.dataFilterAndSort(
-        crazyPoolResponse,
-        "low-to-high",
+      const resultList = await Promise.all(
+        this.dashboardConfigs.map(async (config) => {
+          const response = await fetch(config.sheetURL, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch data for ${config.id}`);
+          }
+          const sortedRows = await this.dataFilterAndSort(response, config.sort);
+          return {
+            id: config.id,
+            rows: sortedRows,
+          };
+        }),
       );
 
-      console.log("Data fetched successfully:", {
-        activityGameData,
-        crazyPoolData,
+      resultList.forEach((result) => {
+        hasAtLeastOneSuccess = true;
+        this.dataByDashboardId[result.id] = result.rows;
       });
 
-      this.activityGameData = activityGameData;
-      this.crazyPoolData = crazyPoolData;
+      if (hasAtLeastOneSuccess) {
+        this.setBodyState("running");
+      }
       return true;
     } catch (error) {
       console.error("Error fetching data:", error);
-      return false;
+      return hasAtLeastOneSuccess || Object.keys(this.dataByDashboardId).length > 0;
     }
   }
 
-  showErrorMessage () {
-    const body = document.querySelector("body");
-    if (body) {
-      body.setAttribute("class", "fail");
-    }
+  showErrorMessage() {
+    this.setBodyState("fail");
   }
 
   async switchLeaderboardUi() {
-    this.runningAnimation = true;
-    const getBody = document.querySelector("body");
-    if (getBody) {
-      // hide current leaderboard or loading spinner
-      getBody.setAttribute("class", "");
-
-      // wait for current animation complete and  update html with the latest data
-      const leaveAnimation = setTimeout(() => {
-        this.updateUiWithData();
-      }, 1000);
-
-      const timer = setTimeout(() => {
-        console.log(
-          "trigger animation with set timeout",
-          this.currentLeaderboard,
-        );
-
-        getBody.classList.add(this.currentLeaderboard);
-        this.currentLeaderboard =
-          this.currentLeaderboard === "activity-game"
-            ? "crazy-pool"
-            : "activity-game";
-        clearTimeout(timer);
-        clearTimeout(leaveAnimation);
-        this.runningAnimation = false;
-      }, 1500);
+    if (this.dashboardConfigs.length < 2) {
+      return;
     }
+
+    this.runningAnimation = true;
+
+    const nextLeaderboardIndex =
+      (this.currentLeaderboardIndex + 1) % this.dashboardConfigs.length;
+    const nextLeaderboardId = this.dashboardConfigs[nextLeaderboardIndex].id;
+
+    this.clearActiveLeaderboard();
+
+    // Give CSS a moment to fade out before switching content.
+    window.setTimeout(() => {
+      this.setActiveLeaderboard(nextLeaderboardId);
+      this.currentLeaderboardIndex = nextLeaderboardIndex;
+      this.runningAnimation = false;
+      this.timeoutAndRefreshAnimation();
+    }, 900);
   }
 
-  // this method updates the UI with the latest data based on the current leaderboard type
-  async updateUiWithData() {
-    console.log("Updating UI with data for:", this.currentLeaderboard);
-    const leaderboardAsList: NodeListOf<HTMLElement> =
-      document.querySelectorAll(".leaderboard");
-    if (leaderboardAsList.length) {
-      const leaderboardArray = Array.from(leaderboardAsList);
+  clearActiveLeaderboard() {
+    const leaderboardAsList: NodeListOf<HTMLElement> = document.querySelectorAll(
+      ".leaderboard",
+    );
+    leaderboardAsList.forEach((leaderboard) => {
+      leaderboard.classList.remove("is-active");
+    });
+  }
 
-      leaderboardArray.forEach((leaderboard) => {
-        const rowContainer: HTMLElement | null = leaderboard.querySelector(
-          ".content .container",
-        );
-        if (rowContainer) {
-          this.rowGenerator(
-            rowContainer,
-            this.currentLeaderboard === "activity-game"
-              ? this.activityGameData
-              : this.crazyPoolData,
-          );
-        }
-      });
+  setActiveLeaderboard(dashboardId: string) {
+    this.updateUiWithData();
+    this.clearActiveLeaderboard();
+
+    const leaderboard = document.getElementById(dashboardId);
+    if (!leaderboard) {
+      return;
     }
+
+    leaderboard.classList.add("is-active");
+  }
+
+  updateUiWithData() {
+    this.dashboardConfigs.forEach((dashboardConfig) => {
+      const leaderboard = document.getElementById(dashboardConfig.id);
+      if (!leaderboard) {
+        return;
+      }
+
+      const rowContainer: HTMLElement | null = leaderboard.querySelector(
+        ".content .container",
+      );
+
+      if (!rowContainer) {
+        return;
+      }
+
+      this.rowGenerator(rowContainer, this.dataByDashboardId[dashboardConfig.id] ?? []);
+    });
   }
 
   // this method generate row data and insert into the leaderboard
-  async rowGenerator(parent: HTMLElement, data: Record<string, string>[]) {
+  rowGenerator(parent: HTMLElement, data: LeaderboardRow[]) {
     // clear / remove previous row data
     parent.innerHTML = "";
 
     data.forEach((row, index) => {
-      const serial = index + 1;
-      const name = row["Player Name"];
-      const score = row["Score"];
+      const scoreRow = document.createElement("div");
+      scoreRow.className = "score-row";
+
+      const nameWrap = document.createElement("div");
+      nameWrap.className = "name";
+
+      const serialNode = document.createElement("div");
+      serialNode.className = "serial";
+      serialNode.textContent = String(index + 1);
+
+      const playerNode = document.createElement("div");
+      playerNode.className = "player";
+      playerNode.textContent = row["Player Name"];
+
+      const scoreNode = document.createElement("div");
+      scoreNode.className = "score";
+      scoreNode.textContent = row.Score;
+
+      nameWrap.append(serialNode, playerNode);
+      scoreRow.append(nameWrap, scoreNode);
+      parent.append(scoreRow);
+    });
+
+    if (!data.length) {
       parent.insertAdjacentHTML(
         "beforeend",
-        `
-    <div class="score-row">
-        <div class="name">
-            <div class="serial">${serial}</div>
-            <div class="player">${name}</div>
-        </div>
-        <div class="score">${score}</div>
-    </div>
-    `,
+        `<div class="score-row"><div class="name"><div class="player">No approved rows yet</div></div><div class="score">--</div></div>`,
       );
-    });
+    }
   }
 
   // next refresh animation for time and progress bar in the footer
-  async timeoutAndRefreshAnimation() {
+  timeoutAndRefreshAnimation() {
     const leaderboardList = document.querySelectorAll(".leaderboard");
     if (leaderboardList.length) {
       const leaderboardArray = Array.from(leaderboardList);
 
       leaderboardArray.forEach((leaderboard) => {
-        const leaderboardFooter: HTMLElement | null =
-          leaderboard.querySelector(".footer");
         const footerTimer: HTMLElement | null = leaderboard.querySelector(
           ".footer .timer span",
         );
@@ -178,7 +234,7 @@ class Leaderboard {
           ".footer .progress-bar .progress",
         );
 
-        if (leaderboardFooter && footerTimer && footerProgress) {
+        if (footerTimer && footerProgress) {
           footerTimer.textContent = String(
             this.leaderboardTimeout - this.currentTimer,
           );
@@ -192,23 +248,25 @@ class Leaderboard {
   // filter and serialize data from large to small
   async dataFilterAndSort(
     response: Response,
-    type: "low-to-high" | "high-to-low",
-  ): Promise<Record<string, string>[]> {
+    type: SortOrder,
+  ): Promise<LeaderboardRow[]> {
     const data = await response.text();
-    const rows = data.split("\n").slice(1);
+    const rows = data
+      .split("\n")
+      .map((row) => row.trim())
+      .filter((row) => row.length > 0)
+      .slice(1);
 
     const filteredRow = rows
       .map((row) => {
-        return Object.fromEntries(
-          this.dataHeader.map((header, index) => [
-            header,
-            row.split(",").map((item) => item.trimEnd())[index],
-          ]),
+        const values = row.split(",").map((item) => item.trim());
+        const rowData = Object.fromEntries(
+          this.dataHeader.map((header, index) => [header, values[index] ?? ""]),
         );
+        return rowData as LeaderboardRow;
       })
       .filter((row) => {
-        console.log("Filtering row:", row);
-        return row.Approve.trim().toLowerCase() === "yes";
+        return (row.Approve ?? "").trim().toLowerCase() === "yes";
       })
       .sort((a, b) => {
         const scoreA = Number(String(a.Score).replace(/\r/g, "").trim());
@@ -216,7 +274,7 @@ class Leaderboard {
         return type === "high-to-low" ? scoreB - scoreA : scoreA - scoreB;
       });
 
-    return filteredRow.slice(0, 5); // return first 5 rows
+    return filteredRow.slice(0, this.maxVisibleRows); // return first N rows
   }
 }
 

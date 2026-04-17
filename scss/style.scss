@@ -343,14 +343,8 @@ body.loading #loading {
   opacity: 1;
 }
 
-body.crazy-pool {
-  #crazy-pool {
-    opacity: 1;
-  }
-}
-
-body.activity-game {
-  #activity-game {
+body {
+  .leaderboard.is-active {
     opacity: 1;
   }
 }

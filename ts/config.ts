@@ -1,3 +1,20 @@
-export const crazyPoolSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=133336340&single=true&output=csv';
+import type { DashboardConfig } from "./types/global.types.js";
 
-export const activityGameSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=1011544952&single=true&output=csv';
+export const leaderboardRotationSeconds = 15;
+export const leaderboardDataRefreshSeconds = 15;
+export const leaderboardVisibleRows = 5;
+
+export const dashboardConfigs: DashboardConfig[] = [
+	{
+		id: "activity-game",
+		sheetURL:
+			"https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=1011544952&single=true&output=csv",
+		sort: "high-to-low",
+	},
+	{
+		id: "crazy-pool",
+		sheetURL:
+			"https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=133336340&single=true&output=csv",
+		sort: "low-to-high",
+	},
+];

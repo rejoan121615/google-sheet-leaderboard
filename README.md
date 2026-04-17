@@ -27,12 +27,12 @@ Follow these rules so `ts/script.ts` can parse and sort correctly:
 
 ## How Sorting Works
 
-From `ts/script.ts`:
+From `ts/config.ts`:
 
-1. `activity-game` data is sorted `high-to-low` by `Score`.
-2. `crazy-pool` data is sorted `low-to-high` by `Score`.
+1. Each dashboard has an `id`, `sheetURL`, and `sort` mode.
+2. `sort` can be `high-to-low` or `low-to-high`.
 3. Only approved rows are kept.
-4. Only top 5 rows are shown after sorting.
+4. Only top N rows are shown (`leaderboardVisibleRows`).
 
 ## Google Sheet Configuration Steps
 
@@ -57,7 +57,18 @@ Then publish as CSV:
 
 Edit these exports in `ts/config.ts`:
 
-- `activityGameSheetURL`
-- `crazyPoolSheetURL`
+- `dashboardConfigs`
+- `leaderboardRotationSeconds`
+- `leaderboardDataRefreshSeconds`
+- `leaderboardVisibleRows`
+
+## Add a New Dashboard (Future)
+
+1. Add a new `.leaderboard` block in `index.html` with a unique `id`.
+2. Add a new object to `dashboardConfigs` with the same `id`.
+3. Set `sheetURL` and sorting mode for that dashboard.
+4. Recompile TypeScript and SCSS.
+
+No script logic changes are required for adding a new dashboard when the ID matches.
 
 After updating the TypeScript files, compile as usual so the generated JavaScript uses the latest URLs.
