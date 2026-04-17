@@ -1,4 +1,12 @@
 import { dashboardConfigs, leaderboardDataRefreshSeconds, leaderboardRotationSeconds, leaderboardVisibleRows, } from "./config.js";
+class LeaderboardAppError extends Error {
+    type;
+    constructor(type, message) {
+        super(message);
+        this.type = type;
+        this.name = "LeaderboardAppError";
+    }
+}
 class Leaderboard {
     leaderboardTimeout = leaderboardRotationSeconds;
     currentTimer = 0;
@@ -16,7 +24,62 @@ class Leaderboard {
     ];
     uiSwitchIntervalId = null;
     dataRefreshIntervalId = null;
+    constructor() {
+        window.addEventListener("offline", () => {
+            this.showErrorMessage("offline");
+        });
+        window.addEventListener("online", async () => {
+            const hasData = Object.keys(this.dataByDashboardId).length > 0;
+            if (hasData) {
+                this.setBodyState("running");
+            }
+            await this.fetchData();
+            this.updateUiWithData();
+        });
+    }
+    getErrorContent(type) {
+        if (type === "offline") {
+            return {
+                title: "No Internet Connection",
+                description: "Network disconnected. Leaderboard will reconnect automatically when internet returns.",
+            };
+        }
+        if (type === "request-failed") {
+            return {
+                title: "Leaderboard Data Unavailable",
+                description: "Failed to load Google Sheet data. Check the sheet URL, sharing permissions, and published CSV link.",
+            };
+        }
+        return {
+            title: "Internal Application Error",
+            description: "Unexpected error in leaderboard app. Please refresh the display or restart the device.",
+        };
+    }
+    getErrorElement() {
+        return document.getElementById("error");
+    }
+    setErrorUi(type) {
+        const errorElement = this.getErrorElement();
+        if (!errorElement) {
+            return;
+        }
+        const content = this.getErrorContent(type);
+        errorElement.className = `error error--${type}`;
+        errorElement.innerHTML = `<h2 class="error-title">${content.title}</h2><p class="error-description">${content.description}</p>`;
+    }
+    resolveErrorType(error) {
+        if (!navigator.onLine) {
+            return "offline";
+        }
+        if (error instanceof LeaderboardAppError) {
+            return error.type;
+        }
+        return "internal";
+    }
     async fetchWithTimeout(url, timeoutMs) {
+        if (!navigator.onLine) {
+            throw new LeaderboardAppError("offline", "Device is offline");
+        }
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
         try {
@@ -24,6 +87,12 @@ class Leaderboard {
                 cache: "no-store",
                 signal: controller.signal,
             });
+        }
+        catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") {
+                throw new LeaderboardAppError("request-failed", "Request timed out while fetching sheet data");
+            }
+            throw new LeaderboardAppError(this.resolveErrorType(error), "Request failed while fetching sheet data");
         }
         finally {
             window.clearTimeout(timeoutId);
@@ -58,13 +127,12 @@ class Leaderboard {
     }
     async appStart() {
         if (!this.dashboardConfigs.length) {
-            this.showErrorMessage();
+            this.showErrorMessage("internal");
             return;
         }
         this.setBodyState("loading");
         const isDataFetched = await this.fetchData();
         if (!isDataFetched) {
-            this.showErrorMessage();
             return;
         }
         this.setBodyState("running");
@@ -105,34 +173,48 @@ class Leaderboard {
     }
     async fetchData() {
         console.log("Fetching data...");
-        let hasAtLeastOneSuccess = false;
-        try {
-            const resultList = await Promise.all(this.dashboardConfigs.map(async (config) => {
-                const response = await this.fetchWithTimeout(config.sheetURL, 10000);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch data for ${config.id}`);
-                }
-                const sortedRows = await this.dataFilterAndSort(response, config.sort);
-                return {
-                    id: config.id,
-                    rows: sortedRows,
-                };
-            }));
-            resultList.forEach((result) => {
-                hasAtLeastOneSuccess = true;
-                this.dataByDashboardId[result.id] = result.rows;
-            });
-            if (hasAtLeastOneSuccess) {
-                this.setBodyState("running");
+        const resultList = await Promise.allSettled(this.dashboardConfigs.map(async (config) => {
+            const response = await this.fetchWithTimeout(config.sheetURL, 10000);
+            if (!response.ok) {
+                throw new LeaderboardAppError("request-failed", `Failed to fetch data for ${config.id}`);
             }
+            const sortedRows = await this.dataFilterAndSort(response, config.sort);
+            return {
+                id: config.id,
+                rows: sortedRows,
+            };
+        }));
+        let hasAtLeastOneSuccess = false;
+        const failureTypes = new Set();
+        resultList.forEach((result) => {
+            if (result.status === "fulfilled") {
+                hasAtLeastOneSuccess = true;
+                this.dataByDashboardId[result.value.id] = result.value.rows;
+                return;
+            }
+            const resolvedErrorType = this.resolveErrorType(result.reason);
+            failureTypes.add(resolvedErrorType);
+            console.error("Error fetching data:", result.reason);
+        });
+        if (hasAtLeastOneSuccess) {
+            this.setBodyState("running");
             return true;
         }
-        catch (error) {
-            console.error("Error fetching data:", error);
-            return hasAtLeastOneSuccess || Object.keys(this.dataByDashboardId).length > 0;
+        const hasCachedData = Object.keys(this.dataByDashboardId).length > 0;
+        if (hasCachedData) {
+            this.showErrorMessage(failureTypes.has("offline") ? "offline" : "request-failed");
+            return true;
         }
+        const errorType = failureTypes.has("offline")
+            ? "offline"
+            : failureTypes.has("request-failed")
+                ? "request-failed"
+                : "internal";
+        this.showErrorMessage(errorType);
+        return false;
     }
-    showErrorMessage() {
+    showErrorMessage(type) {
+        this.setErrorUi(type);
         this.setBodyState("fail");
     }
     async switchLeaderboardUi() {
