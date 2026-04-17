@@ -8,7 +8,7 @@ export type LeaderboardRow = {
 };
 
 export type DashboardConfig = {
-	id: string;
+	name: string;
 	sheetURL: string;
 	sort: SortOrder;
 };

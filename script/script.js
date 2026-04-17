@@ -58,6 +58,60 @@ class Leaderboard {
     getErrorElement() {
         return document.getElementById("error");
     }
+    getDashboardIdFromName(name) {
+        return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-");
+    }
+    getLeaderboardContainer() {
+        return document.querySelector(".leaderboard-container");
+    }
+    getBoardOrderText(sort) {
+        return sort === "high-to-low"
+            ? "Leaderboard - Highscores Today!"
+            : "Leaderboard - Lowest Scores Today!";
+    }
+    createLeaderboardElement(dashboardConfig) {
+        const leaderboardId = this.getDashboardIdFromName(dashboardConfig.name);
+        const leaderboard = document.createElement("div");
+        leaderboard.className = "leaderboard";
+        leaderboard.id = leaderboardId;
+        leaderboard.innerHTML = `
+      <div class="header">
+        <div class="container">
+          <h1 class="title">${dashboardConfig.name}</h1>
+          <h3 class="board-order">${this.getBoardOrderText(dashboardConfig.sort)}</h3>
+          <div class="logo">
+            <img src="./images/logo.png" alt="Bar Logo">
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="container"></div>
+      </div>
+      <div class="footer">
+        <div class="container">
+          <div class="refresh-timer">
+            <h3>Next board refresh</h3>
+            <h6 class="timer"><span>${this.leaderboardTimeout}</span> sec</h6>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress"></div>
+        </div>
+      </div>
+    `;
+        return leaderboard;
+    }
+    renderLeaderboardSkeletons() {
+        const leaderboardContainer = this.getLeaderboardContainer();
+        if (!leaderboardContainer) {
+            return false;
+        }
+        leaderboardContainer.innerHTML = "";
+        this.dashboardConfigs.forEach((dashboardConfig) => {
+            leaderboardContainer.append(this.createLeaderboardElement(dashboardConfig));
+        });
+        return true;
+    }
     setErrorUi(type) {
         const errorElement = this.getErrorElement();
         if (!errorElement) {
@@ -130,6 +184,11 @@ class Leaderboard {
             this.showErrorMessage("internal");
             return;
         }
+        const hasRenderedLeaderboardSkeletons = this.renderLeaderboardSkeletons();
+        if (!hasRenderedLeaderboardSkeletons) {
+            this.showErrorMessage("internal");
+            return;
+        }
         this.setBodyState("loading");
         const isDataFetched = await this.fetchData();
         if (!isDataFetched) {
@@ -137,7 +196,7 @@ class Leaderboard {
         }
         this.setBodyState("running");
         this.updateUiWithData();
-        this.setActiveLeaderboard(this.dashboardConfigs[this.currentLeaderboardIndex].id);
+        this.setActiveLeaderboard(this.getDashboardIdFromName(this.dashboardConfigs[this.currentLeaderboardIndex].name));
         this.timeoutAndRefreshAnimation();
         // Rotate visible leaderboard forever.
         this.uiSwitchIntervalId = window.setInterval(async () => {
@@ -176,11 +235,12 @@ class Leaderboard {
         const resultList = await Promise.allSettled(this.dashboardConfigs.map(async (config) => {
             const response = await this.fetchWithTimeout(config.sheetURL, 10000);
             if (!response.ok) {
-                throw new LeaderboardAppError("request-failed", `Failed to fetch data for ${config.id}`);
+                throw new LeaderboardAppError("request-failed", `Failed to fetch data for ${config.name}`);
             }
             const sortedRows = await this.dataFilterAndSort(response, config.sort);
+            const dashboardId = this.getDashboardIdFromName(config.name);
             return {
-                id: config.id,
+                id: dashboardId,
                 rows: sortedRows,
             };
         }));
@@ -223,7 +283,7 @@ class Leaderboard {
         }
         this.runningAnimation = true;
         const nextLeaderboardIndex = (this.currentLeaderboardIndex + 1) % this.dashboardConfigs.length;
-        const nextLeaderboardId = this.dashboardConfigs[nextLeaderboardIndex].id;
+        const nextLeaderboardId = this.getDashboardIdFromName(this.dashboardConfigs[nextLeaderboardIndex].name);
         this.clearActiveLeaderboard();
         // Give CSS a moment to fade out before switching content.
         window.setTimeout(() => {
@@ -250,7 +310,8 @@ class Leaderboard {
     }
     updateUiWithData() {
         this.dashboardConfigs.forEach((dashboardConfig) => {
-            const leaderboard = document.getElementById(dashboardConfig.id);
+            const dashboardId = this.getDashboardIdFromName(dashboardConfig.name);
+            const leaderboard = document.getElementById(dashboardId);
             if (!leaderboard) {
                 return;
             }
@@ -258,7 +319,7 @@ class Leaderboard {
             if (!rowContainer) {
                 return;
             }
-            this.rowGenerator(rowContainer, this.dataByDashboardId[dashboardConfig.id] ?? []);
+            this.rowGenerator(rowContainer, this.dataByDashboardId[dashboardId] ?? []);
         });
     }
     // this method generate row data and insert into the leaderboard
