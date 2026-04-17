@@ -58,6 +58,49 @@ class Leaderboard {
     getErrorElement() {
         return document.getElementById("error");
     }
+    getLoadingElement() {
+        return document.getElementById("loading");
+    }
+    createLoadingElement() {
+        const loadingElement = document.createElement("div");
+        loadingElement.className = "loading";
+        loadingElement.id = "loading";
+        loadingElement.innerHTML = `
+      <div class="loading-spinner"></div>
+      <p>Loading leaderboards...</p>
+    `;
+        return loadingElement;
+    }
+    createErrorElement() {
+        const errorElement = document.createElement("div");
+        errorElement.className = "error";
+        errorElement.id = "error";
+        return errorElement;
+    }
+    ensureLoadingElement() {
+        const existingLoadingElement = this.getLoadingElement();
+        if (existingLoadingElement) {
+            return existingLoadingElement;
+        }
+        const loadingElement = this.createLoadingElement();
+        document.body.append(loadingElement);
+        return loadingElement;
+    }
+    ensureErrorElement() {
+        const existingErrorElement = this.getErrorElement();
+        if (existingErrorElement) {
+            return existingErrorElement;
+        }
+        const errorElement = this.createErrorElement();
+        document.body.append(errorElement);
+        return errorElement;
+    }
+    removeLoadingElement() {
+        this.getLoadingElement()?.remove();
+    }
+    removeErrorElement() {
+        this.getErrorElement()?.remove();
+    }
     getDashboardIdFromName(name) {
         return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-");
     }
@@ -66,8 +109,8 @@ class Leaderboard {
     }
     getBoardOrderText(sort) {
         return sort === "high-to-low"
-            ? "Leaderboard - Highscores Today!"
-            : "Leaderboard - Lowest Scores Today!";
+            ? "Highscores Today!"
+            : "Lowest Scores Today!";
     }
     createLeaderboardElement(dashboardConfig) {
         const leaderboardId = this.getDashboardIdFromName(dashboardConfig.name);
@@ -76,9 +119,9 @@ class Leaderboard {
         leaderboard.id = leaderboardId;
         leaderboard.innerHTML = `
       <div class="header">
+        <h3 class="board-order">${this.getBoardOrderText(dashboardConfig.sort)}</h3>
         <div class="container">
           <h1 class="title">${dashboardConfig.name}</h1>
-          <h3 class="board-order">${this.getBoardOrderText(dashboardConfig.sort)}</h3>
           <div class="logo">
             <img src="./images/logo.png" alt="Bar Logo">
           </div>
@@ -113,10 +156,7 @@ class Leaderboard {
         return true;
     }
     setErrorUi(type) {
-        const errorElement = this.getErrorElement();
-        if (!errorElement) {
-            return;
-        }
+        const errorElement = this.ensureErrorElement();
         const content = this.getErrorContent(type);
         errorElement.className = `error error--${type}`;
         errorElement.innerHTML = `<h2 class="error-title">${content.title}</h2><p class="error-description">${content.description}</p>`;
@@ -223,12 +263,23 @@ class Leaderboard {
         if (!body) {
             return;
         }
-        if (type === "running") {
-            body.classList.remove("loading", "fail");
+        if (type === "loading") {
+            this.ensureLoadingElement();
+            this.removeErrorElement();
+            body.classList.remove("fail", "running");
+            body.classList.add("loading");
             return;
         }
+        if (type === "fail") {
+            this.removeLoadingElement();
+            body.classList.remove("loading", "running");
+            body.classList.add("fail");
+            return;
+        }
+        this.removeLoadingElement();
+        this.removeErrorElement();
         body.classList.remove("loading", "fail");
-        body.classList.add(type);
+        body.classList.add("running");
     }
     async fetchData() {
         console.log("Fetching data...");

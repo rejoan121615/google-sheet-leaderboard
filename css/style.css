@@ -65,16 +65,25 @@ body {
 .leaderboard .footer {
   background-color: var(--color-accent-bg);
 }
+.leaderboard .header {
+  position: relative;
+}
+.leaderboard .header .board-order {
+  color: var(--color-primary);
+  text-transform: uppercase;
+  font-size: var(--font-live);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
 .leaderboard .header .container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 100%;
-}
-.leaderboard .header .container .board-order {
-  color: var(--color-primary);
-  text-transform: uppercase;
-  font-size: var(--font-live);
 }
 .leaderboard .header .container .logo {
   width: initial;

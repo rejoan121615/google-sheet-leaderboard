@@ -93,20 +93,25 @@ body {
   }
 
   .header {
+    position: relative;
+
+    .board-order {
+      color: var(--color-primary);
+      text-transform: uppercase;
+      font-size: var(--font-live);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
     .container {
       display: flex;
       align-items: center;
       justify-content: space-between;
       height: 100%;
-      & > {
-        flex: 1;
-      }
-
-      .board-order {
-        color: var(--color-primary);
-        text-transform: uppercase;
-        font-size: var(--font-live);
-      }
 
       .logo {
         width: initial;
