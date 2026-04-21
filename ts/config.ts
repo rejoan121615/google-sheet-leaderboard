@@ -1,26 +1,27 @@
 import type { DashboardConfig } from "./types/global.types.js";
+import { loadDashboardConfigsFromSheet } from "./configLoader.js";
 
 export const leaderboardRotationSeconds = 15;
 export const leaderboardDataRefreshSeconds = 15;
 export const leaderboardVisibleRows = 5;
 
-export const dashboardConfigs: DashboardConfig[] = [
-	{
-		name: "Crazy Pool",
-		sheetURL:
-			"https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=2114842487&single=true&output=csv",
-		sort: "high-to-low",
-	},
-	{
-		name: "Throw Up - The Game",
-		sheetURL:
-			"https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=1011544952&single=true&output=csv",
-		sort: "high-to-low",
-	},
-	{
-		name: "Pixel Arena",
-		sheetURL:
-			"https://docs.google.com/spreadsheets/d/e/2PACX-1vSvEX2dWLvhiWsCvennpAi8j6t395ESeYy30xxIyH63q00qHcxnojSagkLyKpFipfhXUXVYQ4_imNf3/pub?gid=133336340&single=true&output=csv",
-		sort: "low-to-high",
-	},
-];
+// Google Sheet URL for dashboard configurations
+export const CONFIG_SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vStRnxoWdWZ1vLSZavLXqcQe4Pq6qve_c8yP9vOY7t05nr0DCPxfLIjl6xnWCrHuaTk7Fy0s7lEknyM/pub?gid=0&single=true&output=csv";
+
+// This will be populated by initializeDashboardConfigs()
+export let dashboardConfigs: DashboardConfig[] = [];
+
+// Initialize dashboard configurations from Google Sheet
+export async function initializeDashboardConfigs(): Promise<void> {
+  try {
+    dashboardConfigs = await loadDashboardConfigsFromSheet(CONFIG_SHEET_URL);
+    console.log(
+      `Loaded ${dashboardConfigs.length} dashboard configuration(s) from Google Sheet`
+    );
+  } catch (error) {
+    console.error("Failed to load dashboard configurations:", error);
+    // Keep dashboardConfigs as empty array on failure
+    dashboardConfigs = [];
+  }
+}
