@@ -1,4 +1,4 @@
-import { dashboardConfigs, leaderboardDataRefreshSeconds, leaderboardRotationSeconds, leaderboardVisibleRows, } from "./config.js";
+import { dashboardConfigs, initializeDashboardConfigs, leaderboardDataRefreshSeconds, leaderboardRotationSeconds, leaderboardVisibleRows, } from "./config.js";
 class LeaderboardAppError extends Error {
     type;
     constructor(type, message) {
@@ -14,7 +14,7 @@ class Leaderboard {
     runningAnimation = false;
     maxVisibleRows = leaderboardVisibleRows;
     currentLeaderboardIndex = 0;
-    dashboardConfigs = dashboardConfigs;
+    dashboardConfigs = [];
     dataByDashboardId = {};
     dataHeader = [
         "Timestamp",
@@ -25,6 +25,8 @@ class Leaderboard {
     uiSwitchIntervalId = null;
     dataRefreshIntervalId = null;
     constructor() {
+        // Use dynamically loaded dashboard configs
+        this.dashboardConfigs = dashboardConfigs;
         window.addEventListener("offline", () => {
             this.showErrorMessage("offline");
         });
@@ -48,6 +50,12 @@ class Leaderboard {
             return {
                 title: "Leaderboard Data Unavailable",
                 description: "Failed to load Google Sheet data. Check the sheet URL, sharing permissions, and published CSV link.",
+            };
+        }
+        if (type === "all-dashboards-hidden") {
+            return {
+                title: "No Dashboards Available",
+                description: "All dashboards are currently hidden. Please update your Google Sheet configuration and set at least one dashboard Visibility to 'Show'.",
             };
         }
         return {
@@ -221,7 +229,7 @@ class Leaderboard {
     }
     async appStart() {
         if (!this.dashboardConfigs.length) {
-            this.showErrorMessage("internal");
+            this.showErrorMessage("all-dashboards-hidden");
             return;
         }
         const hasRenderedLeaderboardSkeletons = this.renderLeaderboardSkeletons();
@@ -442,6 +450,12 @@ class Leaderboard {
     }
 }
 document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        await initializeDashboardConfigs();
+    }
+    catch (error) {
+        console.error("Failed to initialize dashboard configurations");
+    }
     const leaderboard = new Leaderboard();
     await leaderboard.appStart();
 });

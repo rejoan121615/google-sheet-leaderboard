@@ -1,5 +1,6 @@
 import {
   dashboardConfigs,
+  initializeDashboardConfigs,
   leaderboardDataRefreshSeconds,
   leaderboardRotationSeconds,
   leaderboardVisibleRows,
@@ -10,7 +11,7 @@ import type {
   SortOrder,
 } from "./types/global.types.js";
 
-type ErrorType = "offline" | "request-failed" | "internal";
+type ErrorType = "offline" | "request-failed" | "internal" | "all-dashboards-hidden";
 
 class LeaderboardAppError extends Error {
   type: ErrorType;
@@ -29,7 +30,7 @@ class Leaderboard {
   runningAnimation: boolean = false;
   maxVisibleRows: number = leaderboardVisibleRows;
   currentLeaderboardIndex: number = 0;
-  dashboardConfigs: DashboardConfig[] = dashboardConfigs;
+  dashboardConfigs: DashboardConfig[] = [];
   dataByDashboardId: Record<string, LeaderboardRow[]> = {};
   dataHeader: Array<keyof LeaderboardRow> = [
     "Timestamp",
@@ -41,6 +42,9 @@ class Leaderboard {
   dataRefreshIntervalId: number | null = null;
 
   constructor() {
+    // Use dynamically loaded dashboard configs
+    this.dashboardConfigs = dashboardConfigs;
+
     window.addEventListener("offline", () => {
       this.showErrorMessage("offline");
     });
@@ -70,6 +74,14 @@ class Leaderboard {
         title: "Leaderboard Data Unavailable",
         description:
           "Failed to load Google Sheet data. Check the sheet URL, sharing permissions, and published CSV link.",
+      };
+    }
+
+    if (type === "all-dashboards-hidden") {
+      return {
+        title: "No Dashboards Available",
+        description:
+          "All dashboards are currently hidden. Please update your Google Sheet configuration and set at least one dashboard Visibility to 'Show'.",
       };
     }
 
@@ -282,7 +294,7 @@ class Leaderboard {
 
   async appStart() {
     if (!this.dashboardConfigs.length) {
-      this.showErrorMessage("internal");
+      this.showErrorMessage("all-dashboards-hidden");
       return;
     }
 
@@ -583,6 +595,12 @@ class Leaderboard {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await initializeDashboardConfigs();
+  } catch (error) {
+    console.error("Failed to initialize dashboard configurations");
+  }
+
   const leaderboard = new Leaderboard();
   await leaderboard.appStart();
 });
